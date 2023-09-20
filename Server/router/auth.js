@@ -72,8 +72,17 @@ router.get('/about',authenticate,(req,res)=>{
   res.send(req.rootUser);
 
 });
-router.post('/logout',(req,res)=>{
-  token=""
-  res.clearCookie();
+router.post('/logout', async (req,res)=>{
+  const token = req.cookies?.jwtoken; // Assuming your token is stored in cookies
+    if (!token) {
+      return res.status(401).send("Unauthorized: No token provided");
+    }
+
+  const verifyToken = jwt.verify(token, process.env.SECRET_KEY);
+
+  await User.findOneAndUpdate({_id: verifyToken._id}, {$set: {token: ""}})
+
+  res.clearCookie("jwtoken");
+  res.sendStatus(200);
 })
 module.exports = router;
